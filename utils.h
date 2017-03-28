@@ -94,7 +94,7 @@ inline void transpose(double A[4][4])
   B[1][2] = A[2][1];
   B[1][3] = A[3][1];
   B[2][0] = A[0][2];
-  B[2][1] = A[2][1];
+  B[2][1] = A[1][2];
   B[2][3] = A[3][2];
   B[3][0] = A[0][3];
   B[3][2] = A[2][3];
@@ -134,8 +134,7 @@ inline void addVectors(struct point3D *a, struct point3D *b)
  // is left in b. This function assumes the w components
  // of both vectFrayPopx;
  b->py=b->py+a->py;
- b->pz=b->pz+a->pz;
- b->pw=1;               // Mind the homogeneous coordinate!
+ b->pz=b->pz+a->pz;          // Mind the homogeneous coordinate!
 }
 
 inline void subVectors(struct point3D *a, struct point3D *b)
@@ -145,8 +144,7 @@ inline void subVectors(struct point3D *a, struct point3D *b)
  // of both vectors are set to 1.
  b->px=b->px-a->px;
  b->py=b->py-a->py;
- b->pz=b->pz-a->pz;
- b->pw=1;               // Mind the homogeneous coordinate!
+ b->pz=b->pz-a->pz;   // Mind the homogeneous coordinate!
 }
 
 inline double length(struct point3D *a)
