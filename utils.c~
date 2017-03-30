@@ -8,8 +8,6 @@
 */
 
 #include "utils.h"
-#include "float.h"
-
 
 // A useful 4x4 identity matrix which can be used at any point to
 // initialize or reset object transformations
@@ -64,26 +62,17 @@ struct pointLS *newPLS(struct point3D *p0, double r, double g, double b)
 /////////////////////////////////////////////
 // Ray and normal transforms
 /////////////////////////////////////////////
-void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, struct object3D *obj)
+inline void rayTransform(struct ray3D *ray_orig, struct ray3D *ray_transformed, struct object3D *obj)
 {
  // Transforms a ray using the inverse transform for the specified object. This is so that we can
  // use the intersection test for the canonical object. Note that this has to be done carefully!
 
- 	struct point3D l;
-	struct point3D o;
-	o = ray_orig->p0;
-	l = ray_orig->d;
-	l.pw = 0;
+ ///////////////////////////////////////////
+ // TO DO: Complete this function
+ ///////////////////////////////////////////
+}
 
-
-	matVecMult(obj->Tinv, &o);
-	matVecMult(obj->Tinv, &l);
-	
-  	memcpy(&ray_transformed->p0,&o,sizeof(point3D));
-  	memcpy(&ray_transformed->d,&l,sizeof(point3D));
-	}
-
-void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, struct object3D *obj)
+inline void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, struct object3D *obj)
 {
  // Computes the normal at an affinely transformed point given the original normal and the
  // object's inverse transformation. From the notes:
@@ -92,15 +81,6 @@ void normalTransform(struct point3D *n_orig, struct point3D *n_transformed, stru
  ///////////////////////////////////////////
  // TO DO: Complete this function
  ///////////////////////////////////////////
-	double temp[4][4];
-	n_transformed->px = n_orig->px;
-	n_transformed->py = n_orig->py;
-	n_transformed->pz = n_orig->pz;
-	n_transformed->pw = 0;
-
-	memcpy(temp,&obj->Tinv[0][0],16*sizeof(double));
-	transpose(temp);
-	matVecMult(temp, n_transformed);
 }
 
 /////////////////////////////////////////////
@@ -197,71 +177,15 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
  /////////////////////////////////
  // TO DO: Complete this function.
  /////////////////////////////////
- 	struct point3D *p1, *n1, *l, *o;
-	double d, tempa, tempb, tempc;
-	struct ray3D *ray_transformed;
-	ray_transformed = newRay(&(ray->p0), &(ray->d));
- 	rayTransform(ray, ray_transformed, plane);
-	o = &(ray_transformed->p0);
-	l = &(ray_transformed->d);
-	l->pw = 0;
-
-	p1 = newPoint(0, 0, 0);
-	n1 = newPoint(0, 0, 0);
-
-	p1->px = 0;
-	p1->py = 0;
-	p1->pz = 0;
-	p1->pw = 1; 
-
-	n1->px = 0;
-	n1->py = 0;
-	n1->pz = -1; 
-	n1->pw = 0;
+ 	struct point3D *v1, *v2;
+	struct point3D *o;
 	
-	subVectors(o, p1);
-	tempa = dot(p1, n1);
-	tempb = dot(l, n1);
-
-
-	if (l->pz == 0)
-	{
-		*(lambda) = DBL_MAX;
-	}
-	else
-	{
-		*lambda = -o->pz/l->pz;
-		if (*lambda > 0)
-		{
-
-			rayPosition(ray_transformed, *lambda, p1);
-			if (p1->px >= -1 && p1->px <= 1 && p1->py >= -1 && p1->py <= 1 )
-			{
-				matVecMult(plane->T, p1);
-
-				memcpy(p, p1, sizeof(point3D));
-				normalTransform(n1, n, plane);
-				normalize(n);
-			}
-			else
-			{
-				*lambda = DBL_MAX;
-			}
-
-			//fprintf(stderr,"%.2f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f\n",(*lambda), l->px, l->py, l->pz, n->px, n->py, n->pz, tempa, tempb);
-			//fprintf(stderr,"%.4f %.4f %.4f %.4f %.4f %.4f a\n",  p->px, p->py, p->pz, n->px, n->py, n->pz);
-		
-		}
-		else
-		{
-			*lambda = DBL_MAX;
-		}
-
-	}
-	free(p1);
-	free(n1);
-	free(ray_transformed);
-	 
+	o = newPoint(0, 0, 0);
+	v1 = newPoint(1.0, 0, 0);
+	v2 = newPoint(0, 1.0, 0);
+	matVecMult(o->T, 0);
+	matVecMult(o->T, v1);
+	matVecMult(o->T, v2);
  	
 }
 
@@ -270,75 +194,9 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
  // Computes and returns the value of 'lambda' at the intersection
  // between the specified ray and the specified canonical sphere.
 
- 	struct point3D *l, *o, *p1;
-	double d, tempa, tempb, tempc;
-	struct ray3D *ray_transformed;
-	ray_transformed = newRay(&(ray->p0), &(ray->d));
-
-	rayTransform(ray, ray_transformed, sphere);
-	//fprintf(stderr,"%.4f %.4f %.4f %.4f %.4f %.4f\n", ray_transformed->p0.px, ray_transformed->p0.py, ray_transformed->p0.pz, ray_transformed->d.px, ray_transformed->d.py, ray_transformed->d.pz);
-		
-
-	p1 = newPoint(0, 0, 0);
-
-	o = &(ray_transformed->p0);
-	l = &(ray_transformed->d);
-	l->pw = 0;
-
-	tempa = dot(l, o);
-	tempb = length(l);
-	tempc = length(o);
-	d = tempa * tempa - tempb*tempb * (tempc*tempc - 1);
-	if (d < 0)
-	{
-		*lambda = DBL_MAX;
-	}
-	else if ( d == 0)
-	{
-
-		*lambda = tempa;
-		if (*lambda > 0)
-		{
-			rayPosition(ray_transformed, *lambda, p1);
-			matVecMult(sphere->T, p1);
-
-			memcpy(p, p1, sizeof(point3D));
-			normalTransform(p1, n, sphere);
-			normalize(n);
-		}
-		else
-		{
-			*lambda = DBL_MAX;
-		}
-	}
-	else
-	{		
-		*lambda = (-tempa-pow(d, 0.5))/(tempb*tempb);
-
-		//fprintf(stderr,"%.2f %.4f %.4f %.4f \n", *lambda, tempa, tempb, tempc);
-		
-		//fprintf(stderr,"%.2f %.4f %.4f %.4f %.4f %.4f %.4f\n",(*lambda), o->px, o->py, o->pz, l->px, l->py, l->pz);
-		
-		if (*lambda > 0) 
-		{
-		
-		rayPosition(ray_transformed, *lambda, p1);
-
-		memcpy(p, p1, sizeof(point3D));
-		matVecMult(sphere->T, p);
-		normalTransform(p1, n, sphere);
-		normalize(n);
-		//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
-
-		}
-		else
-		{
-			*lambda = DBL_MAX;
-		}
-	}
-
-	free(p1);
-	free(ray_transformed);
+ /////////////////////////////////
+ // TO DO: Complete this function.
+ /////////////////////////////////
 }
 
 void loadTexture(struct object3D *o, const char *filename)
@@ -662,7 +520,7 @@ struct view *setupView(struct point3D *e, struct point3D *g, struct point3D *up,
  c->w.px=-g->px;
  c->w.py=-g->py;
  c->w.pz=-g->pz;
- c->w.pw=0;
+ c->w.pw=1;
  normalize(&c->w);
 
  // Set up the horizontal direction, which must be perpenticular to w and up
@@ -671,7 +529,7 @@ struct view *setupView(struct point3D *e, struct point3D *g, struct point3D *up,
  c->u.px=u->px;
  c->u.py=u->py;
  c->u.pz=u->pz;
- c->u.pw=0;
+ c->u.pw=1;
 
  // Set up the remaining direction, v=(u x w)  - Mind the signs
  v=cross(&c->u, &c->w);
@@ -679,7 +537,7 @@ struct view *setupView(struct point3D *e, struct point3D *g, struct point3D *up,
  c->v.px=v->px;
  c->v.py=v->py;
  c->v.pz=v->pz;
- c->v.pw=0;
+ c->v.pw=1;
 
  // Copy focal length and window size parameters
  c->f=f;
