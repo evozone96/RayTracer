@@ -124,7 +124,8 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  // Returns:
  // - The colour for this ray (using the col pointer)
  //
- struct colourRGB tmp_col;  // Accumulator for colour components
+ struct colourRGB tmp_col, refl_col;  // Accumulator for colour components
+
  double R,G,B;      // Colour for the object in R G and B
 
  // This will hold the colour as we process all the components of
@@ -197,7 +198,8 @@ struct point3D *direction = newPoint(0, 0, 0);
     double intensitySpecular = 1;
 
     findFirstHit(shadowRay, lambda, obj, &objHit, pHit, nHit, &a, &b);
-    if(*lambda == DBL_MAX){
+    if(*lambda == DBL_MAX)
+    {
       
    //fprintf(stderr,"ra: %f  rs: %f  rd: %f \n", ra, rs, rd);
      double ambient = ra * intensityAmbient;
@@ -216,12 +218,19 @@ struct point3D *direction = newPoint(0, 0, 0);
     }
       currLight = currLight->next;
  
-    if (depth > 0){
+    if (depth >= 0)
+    {
       // Color passed in here is not correct. just there to compile for now. 
-      rayTrace(reflectedRay, --depth, col, obj);
+      rayTrace(reflectedRay, --depth, &refl_col, obj);
+
+       tmp_col.R +=  refl_col.R;
+       tmp_col.G +=  refl_col.G;
+       tmp_col.B +=  refl_col.B;
+
     }
   }
- 
+    printf("%d\n", depth);
+  
    col->R = min(tmp_col.R, 1);// * rg;
    col->G = min(tmp_col.G, 1);// * rg;
    col->B = min(tmp_col.B, 1);//* rg;
@@ -329,13 +338,6 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
  struct point3D *n;  // Normal at intersection
  struct colourRGB I;  // Colour returned by shading function
 
- if (depth>MAX_DEPTH) // Max recursion depth reached. Return invalid colour.
- {
-  col->R=-1;
-  col->G=-1;
-  col->B=-1;
-  return;
- }
 
  
  lambda =  (double *) malloc (sizeof (double));
