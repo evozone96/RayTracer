@@ -94,12 +94,13 @@ void buildScene(void)
  insertObject(o,&object_list);
 
  // Insert a single point light source.
- p.px=0;
- p.py=15.5;
- p.pz=-5.5;
- p.pw=1;
- l=newPLS(&p,.95,.95,.95);
- insertPLS(l,&light_list);
+ addAreaLight(5, 5, 0, 0, 1, 0, 15.5, -5.5, 20, 20, 0.75, 0.75, 0.75, &object_list, &light_list);
+ // p.px=0;
+ // p.py=15.5;
+ // p.pz=-5.5;
+ // p.pw=1;
+ // l=newPLS(&p,.95,.95,.95);
+ // insertPLS(l,&light_list);
 
  // End of simple scene for Assignment 3
  // Keep in mind that you can define new types of objects such as cylinders and parametric surfaces,
@@ -181,6 +182,8 @@ struct ray3D *reflectedRay = newRay(p, r);
 
 struct pointLS *currLight = light_list;
 struct point3D *direction = newPoint(0, 0, 0);
+double count = 0;
+double totalAmb;
   while (currLight != NULL)
 
   {    
@@ -198,37 +201,44 @@ struct point3D *direction = newPoint(0, 0, 0);
     double intensitySpecular = 1;
 
     findFirstHit(shadowRay, lambda, obj, &objHit, pHit, nHit, &a, &b);
+    double ambient = ra * intensityAmbient;
+
+    totalAmb += ambient;
     if(*lambda == DBL_MAX)
     {
       
    //fprintf(stderr,"ra: %f  rs: %f  rd: %f \n", ra, rs, rd);
-     double ambient = ra * intensityAmbient;
      double specular = rs * pow(max(0, dot(&(shadowRay->d) , r)), shinyness) * intensitySpecular;
      double diffuse = rd * max(0, dot(n, &shadowRay->d)) * intensityDiffuse;
    
    //fprintf(stderr,"ambient diffuse spec %f %f %f\n", ambient, diffuse, specular);
    
-     tmp_col.R +=   (ambient + diffuse + specular) * R;
-     tmp_col.G +=   (ambient + diffuse + specular) * G;
-     tmp_col.B +=  (ambient + diffuse + specular) * B;
+     tmp_col.R += (diffuse + specular) * R * currLight->col.R;
+     tmp_col.G += (diffuse + specular) * G * currLight->col.G;
+     tmp_col.B += (diffuse + specular) * B * currLight->col.B;
+
+
    
-   //fprintf(stderr,"R G B %f %f %f\n", tmp_col.R, tmp_col.G, tmp_col.B);
+    fprintf(stderr,"R G B %f %f %f %f %f %f\n", tmp_col.R, tmp_col.G, tmp_col.B, currLight->col.R, currLight->col.G, currLight->col.B);
       
     
     }
       currLight = currLight->next;
+      count++;
  
     if (depth >= 0)
     {
-      // Color passed in here is not correct. just there to compile for now. 
       rayTrace(reflectedRay, --depth, &refl_col, obj);
 
-       tmp_col.R +=  refl_col.R;
-       tmp_col.G +=  refl_col.G;
-       tmp_col.B +=  refl_col.B;
+       tmp_col.R +=  0.5*refl_col.R;
+       tmp_col.G +=  0.5*refl_col.G;
+       tmp_col.B +=  0.5*refl_col.B;
 
     }
   }
+  tmp_col.R += totalAmb/count;
+  tmp_col.G += totalAmb/count;
+  tmp_col.B += totalAmb/count;
     printf("%d\n", depth);
   
    col->R = min(tmp_col.R, 1);// * rg;
