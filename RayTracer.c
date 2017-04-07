@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "float.h"
 
+
 // A couple of global structures and data: An object list, a light list, and the
 // maximum recursion depth
 struct object3D *object_list;
@@ -61,6 +62,9 @@ void buildScene(void)
  // Insert a couple of objects. A plane and two spheres
  // with some transformations.
 
+  const char filename1[] = "bricks.ppm";
+  const char filename2[] = "red.ppm";
+ 
  // Let's add a plane
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
  o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);  // Note the plane is highly-reflective (rs=rg=.75) so we
@@ -75,6 +79,7 @@ void buildScene(void)
  invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
            //and store the inverse
            // transform for this object!
+ loadTexture(o, filename1);
  insertObject(o,&object_list);      // Insert into object list
 
  // Let's add a couple spheres
@@ -84,17 +89,22 @@ void buildScene(void)
  RotateY(o,PI/2);
  Translate(o,-1.45,1.1,3.5);
  invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, filename2);
  insertObject(o,&object_list);
 
+ 
+ /*
  o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
  Scale(o,.5,2.0,1.0);
  RotateZ(o,PI/1.5);
  Translate(o,1.75,1.25,5.0);
  invert(&o->T[0][0],&o->Tinv[0][0]);
+  loadTexture(o, filename);
  insertObject(o,&object_list);
+*/
 
- // Insert a single point light source.
  addAreaLight(5, 5, 0, 0, 1, 0, 15.5, -5.5, 20, 20, 0.75, 0.75, 0.75, &object_list, &light_list);
+ // Insert a single point light source.
  // p.px=0;
  // p.py=15.5;
  // p.pz=-5.5;
@@ -125,6 +135,10 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  // Returns:
  // - The colour for this ray (using the col pointer)
  //
+ 
+ // a = 0.5;
+ // b = 0.5;
+ 
  struct colourRGB tmp_col, refl_col;  // Accumulator for colour components
 
  double R,G,B;      // Colour for the object in R G and B
@@ -135,6 +149,9 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  tmp_col.G=0;
  tmp_col.B=0;
 
+ 
+ // fprintf(stderr,"shade 1\n");
+ 
  if (obj->texImg==NULL)   // Not textured, use object colour
  {
   R=obj->col.R;
@@ -143,9 +160,12 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
  }
  else
  {
+   //  fprintf(stderr,"shade text 1 %f %f %f\n", R, G, B);
   // Get object colour from the texture given the texture coordinates (a,b), and the texturing function
   // for the object. Note that we will use textures also for Photon Mapping.
   obj->textureMap(obj->texImg,a,b,&R,&G,&B);
+ // fprintf(stderr,"shade text 2 %f %f %f\n", R, G, B);
+  
  }
 
  //////////////////////////////////////////////////////////////
@@ -155,15 +175,17 @@ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct 
 // for light in scene create ray from intersection to light 
 
 
-R = obj->col.R;
-G = obj->col.G;
-B = obj->col.B;
+// R = obj->col.R;
+// G = obj->col.G;
+// B = obj->col.B;
  
 double shinyness = obj->shinyness;
 double ra = obj->alb.ra;
 double rd = obj->alb.rd;
 double rs = obj->alb.rs;
 double rg = obj->alb.rg;
+double count = 0;
+double totalAmb;
  
 double *lambda = (double *) malloc (sizeof (double));
 struct object3D *objHit;
@@ -182,8 +204,6 @@ struct ray3D *reflectedRay = newRay(p, r);
 
 struct pointLS *currLight = light_list;
 struct point3D *direction = newPoint(0, 0, 0);
-double count = 0;
-double totalAmb;
   while (currLight != NULL)
 
   {    
@@ -201,9 +221,8 @@ double totalAmb;
     double intensitySpecular = 1;
 
     findFirstHit(shadowRay, lambda, obj, &objHit, pHit, nHit, &a, &b);
-    double ambient = ra * intensityAmbient;
-
-    totalAmb += ambient;
+     double ambient = ra * intensityAmbient;
+     totalAmb += ambient;
     if(*lambda == DBL_MAX)
     {
       
@@ -216,10 +235,8 @@ double totalAmb;
      tmp_col.R += (diffuse + specular) * R * currLight->col.R;
      tmp_col.G += (diffuse + specular) * G * currLight->col.G;
      tmp_col.B += (diffuse + specular) * B * currLight->col.B;
-
-
    
-    fprintf(stderr,"R G B %f %f %f %f %f %f\n", tmp_col.R, tmp_col.G, tmp_col.B, currLight->col.R, currLight->col.G, currLight->col.B);
+   //fprintf(stderr,"R G B %f %f %f\n", tmp_col.R, tmp_col.G, tmp_col.B);
       
     
     }
@@ -228,6 +245,7 @@ double totalAmb;
  
     if (depth >= 0)
     {
+      // Color passed in here is not correct. just there to compile for now. 
       rayTrace(reflectedRay, --depth, &refl_col, obj);
 
        tmp_col.R +=  0.5*refl_col.R;
@@ -239,7 +257,7 @@ double totalAmb;
   tmp_col.R += totalAmb/count;
   tmp_col.G += totalAmb/count;
   tmp_col.B += totalAmb/count;
-    printf("%d\n", depth);
+   // printf("%d\n", depth);
   
    col->R = min(tmp_col.R, 1);// * rg;
    col->G = min(tmp_col.G, 1);// * rg;
@@ -362,6 +380,7 @@ void rayTrace(struct ray3D *ray, int depth, struct colourRGB *col, struct object
     
 
  if(*lambda < DBL_MAX){
+  //  fprintf(stderr,"inside lambda\n");
  //fprintf(stderr,"%.4f %.4f %.4f %.4f %.4f %.4f\n",  p->px, p->py, p->pz, n->px, n->py, n->pz);
   I.R = obj->col.R;
   I.G = obj->col.G;
@@ -404,7 +423,7 @@ int main(int argc, char *argv[])
  struct point3D pc,d;   // Point structures to keep the coordinates of a pixel and
         // the direction or a ray
  struct ray3D *ray;   // Structure to keep the ray from e to a pixel
- struct colourRGB col;    // Return colour for raytraced pixels
+ struct colourRGB col, areaCol;    // Return colour for raytraced pixels
  int i,j;     // Counters for pixel coordinates
  unsigned char *rgbIm;
 
@@ -487,7 +506,7 @@ int main(int argc, char *argv[])
  // and a focal length of -1 (why? where is the image plane?)
  // Note that the top-left corner of the window is at (-2, 2)
  // in camera coordinates.
- cam=setupView(&e, &g, &up, -3, -2, 2, 4);
+ cam=setupView(&e, &g, &up, -3, -1, 1, 2);
 
  if (cam==NULL)
  {
@@ -501,6 +520,9 @@ int main(int argc, char *argv[])
  background.R=0.2;
  background.G=0.2;
  background.B=0.2;
+ areaCol.R = 0;
+ areaCol.G = 0;
+ areaCol.B = 0;
 
  // Do the raytracing
  //////////////////////////////////////////////////////
@@ -528,38 +550,55 @@ int main(int argc, char *argv[])
   fprintf(stderr,"Rendering row: ");
   //since the origin at 0, can easily find direction without subtracting origin from image point.
 
+  double superSampleScale = pow(antialiasing + 1, atoi(argv[3])); // assume power of two
+
  for (j=0;j<sx;j++)   // For each of the pixels in the image
  {
-  fprintf(stderr,"%d/%d, ",j,sx);
+ // fprintf(stderr,"%d/%d, ",j,sx);
   for (i=0;i<sx;i++)
   {
-    pc.px = 0;
-    pc.py = 0;
-    pc.pz = 0;
-    pc.pw = 1;
-    d.px = (-sx/2 + (i + 0/5))*du;
-    d.py = (-sx/2 + (j + 0/5))*dv;
-    d.pz = -1;
-    d.pw = 0;
+    for ( double jj = 0; jj<superSampleScale; jj++)
+    {
+      for (double ii = 0; ii<superSampleScale; ii++)
+      {
+        pc.px = 0;
+        pc.py = 0;
+        pc.pz = 0;
+        pc.pw = 1;
+        d.px = (-sx/2 + (i + 0.5) + ( -superSampleScale/2 + (ii + 0.5))/superSampleScale)*du;
+        d.py = (-sx/2 + (j + 0.5) + ( -superSampleScale/2 + (jj + 0.5))/superSampleScale)*dv;
+        d.pz = -1;
+        d.pw = 0;
 
-    normalize(&d);
-    //fprintf(stderr,"%.4f %.4f %.4f ", d.px, d.py, d.pz); c
-  
-    matVecMult(cam->C2W, &d);
-    matVecMult(cam->C2W, &pc);
-    //printf("%.4f %.4f %.4f \n", d.px, d.py, d.pz); //current camera points to positive z
+        normalize(&d);
+        //fprintf(stderr,"%.4f %.4f %.4f ", d.px, d.py, d.pz); c
+      
+        matVecMult(cam->C2W, &d);
+        matVecMult(cam->C2W, &pc);
+        //printf("%.4f %.4f %.4f \n", d.px, d.py, d.pz); //current camera points to positive z
 
-   
-    ///////////////////////////////////////////////////////////////////
-    // TO DO - complete the code that should be in this loop to do the
-    //         raytracing!
-    ///////////////////////////////////////////////////////////////////
-    ray = newRay(&pc, &d);
-    rayTrace(ray, MAX_DEPTH, &col, NULL);
-    free(ray);
-    *(rgbIm+3*(sx*j+i)) = (unsigned char)(col.R *255);
-    *(rgbIm+(3*(sx*j+i)+1)) = (unsigned char)(col.G*255);
-    *(rgbIm+(3*(sx*j+i)+2)) = (unsigned char)(col.B*255);
+       
+        ///////////////////////////////////////////////////////////////////
+        // TO DO - complete the code that should be in this loop to do the
+        //         raytracing!
+        ///////////////////////////////////////////////////////////////////
+        ray = newRay(&pc, &d);
+        rayTrace(ray, MAX_DEPTH, &col, NULL);
+        free(ray);
+        areaCol.R += col.R;
+        areaCol.G += col.G;
+        areaCol.B += col.B;
+      }
+    }
+    areaCol.R = areaCol.R/(superSampleScale*superSampleScale);
+    areaCol.G = areaCol.G/(superSampleScale*superSampleScale);
+    areaCol.B = areaCol.B/(superSampleScale*superSampleScale);
+    *(rgbIm+3*(sx*j+i)) = (unsigned char)(areaCol.R *255);
+    *(rgbIm+(3*(sx*j+i)+1)) = (unsigned char)(areaCol.G*255);
+    *(rgbIm+(3*(sx*j+i)+2)) = (unsigned char)(areaCol.B*255);
+    areaCol.R = 0;
+    areaCol.G = 0;
+    areaCol.B = 0;
   } 
 
   // end for i
