@@ -290,6 +290,7 @@ struct point3D *nHit = newPoint(0, 0, 0);
 
 //point3D r = ray->d - 2 * dot(&ray->d , n)  * n;
 struct point3D *r = newPoint(dot(&ray->d , n) * n->px, dot(&ray->d , n) * n->py, dot(&ray->d , n) * n->pz);
+struct point3D *u, *v ;
 r->px = -r->px;
 r->py = -r->py;
 r->pz = -r->pz;
@@ -304,6 +305,8 @@ while (currLight != NULL){
       count = count + 1;
       currLight = currLight->next;
 }
+u = cross(r, n);
+v = cross(r, u);
 currLight = light_list;
   while (currLight != NULL)
 
@@ -363,6 +366,8 @@ currLight = light_list;
    col->G = min(tmp_col.G, 1);// * rg;
    col->B = min(tmp_col.B, 1);//* rg;
  // Be sure to update 'col' with the final colour computed here!
+ free(u);
+ free(v);
  free(reflectedRay);
  free(lambda);
  free(nHit);
