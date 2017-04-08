@@ -62,57 +62,90 @@ void buildScene(void)
  // Insert a couple of objects. A plane and two spheres
  // with some transformations.
 
+ 
   const char filename1[] = "bricks.ppm";
   const char filename2[] = "red.ppm";
-  const char filename3[] = "rgreen.ppm";
+  const char filename3[] = "13_stripe.ppm";
+  const char filename4[] = "pool_table_green.ppm";
+  const char filename5[] = "15_stripe.ppm";
+  const char filename6[] = "8_full.ppm";
+  const char filename7[] = "4_full.ppm";
+  const char filename8[] = "10_stripe.ppm";
  
  // Let's add a plane
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
- o=newPlane(.05,.75,.05,.05,.55,.8,.75,1,1,2);  // Note the plane is highly-reflective (rs=rg=.75) so we
+ o=newPlane(.05,.85,.25,.05,.55,.8,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
             // should see some reflections if all is done properly.
             // Colour is close to cyan, and currently the plane is
             // completely opaque (alpha=1). The refraction index is
             // meaningless since alpha=1
- Scale(o,6,6,1);        // Do a few transforms...
+ Scale(o,12,12,1);        // Do a few transforms...
  RotateZ(o,PI/1.20);
  RotateX(o,PI/2.25);
  Translate(o,0,-3,10);
+ //loadTexture(o, filename4);
  invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
            //and store the inverse
            // transform for this object!
- loadTexture(o, filename1);
+ loadTexture(o, filename4);
  insertObject(o,&object_list);      // Insert into object list
+ 
 
+ 
  // Let's add a couple spheres
- o=newSphere(.05,.95,.35,.35,1,.25,.25,1,1,6);
- Scale(o,.75,.5,1.5);
- //Scale(o,1,1,1);
- RotateY(o,PI/2);
- Translate(o,-1.45,1.1,3.5);
- invert(&o->T[0][0],&o->Tinv[0][0]);
- loadTexture(o, filename2);
- insertObject(o,&object_list); 
-
- o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
- Scale(o,.5,2.0,1.0);
- RotateZ(o,PI/1.5);
- Translate(o,1.75,1.25,5.0);
+ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/2);
+ //L,R / U,D / F B
+ Translate(o,-1.45,-3,3.5);
  invert(&o->T[0][0],&o->Tinv[0][0]);
  loadTexture(o, filename3);
  insertObject(o,&object_list);
+ 
+ o=newSphere(.05,.95,.25,.35,.75,.75,.75,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/2);
+ RotateY(o,PI);
+ Translate(o,0.45,-3,3.5);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ insertObject(o,&object_list);
+ 
+ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/2);
+ RotateY(o,PI);
+ Translate(o,1.45,-3,5);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, filename6);
+ insertObject(o,&object_list);
+ 
+ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/2);
+ RotateY(o,PI);
+ Translate(o,2.45,-3,2);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, filename7);
+ insertObject(o,&object_list);
+ 
+ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/2);
+ RotateY(o,PI);
+ Translate(o,3.45,-3,3.5);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, filename8);
+ insertObject(o,&object_list);
+ 
+ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ Scale(o,0.7,0.7,0.7); 
+ RotateX(o,PI/3);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, filename5);
 
  
- /*
- o=newSphere(.05,.95,.95,.75,.75,.95,.55,1,1,6);
- Scale(o,.5,2.0,1.0);
- RotateZ(o,PI/1.5);
- Translate(o,1.75,1.25,5.0);
- invert(&o->T[0][0],&o->Tinv[0][0]);
-  loadTexture(o, filename);
- insertObject(o,&object_list);
-*/
+ addAreaLight(3, 3, 0, -1, 0, 0, 4, 3, 20, 20, 1, 1, 0.9, &object_list, &light_list);
 
- addAreaLight(3, 3, 0, 0, 1, 0, 15.5, -5.5, 5, 5, 0.75, 0.75, 0.75, &object_list, &light_list);
  // Insert a single point light source.
  // p.px=0;
  // p.py=15.5;
@@ -346,17 +379,18 @@ currLight = light_list;
     }
       currLight = currLight->next;
  
-    if (depth > 0)
+
+	free(shadowRay);
+  }    
+  if (depth > 0)
     {
       rayTrace(reflectedRay, depth-1, &refl_col, obj);
 
-       tmp_col.R +=  refl_col.R/count;
-       tmp_col.G +=  refl_col.G/count;
-       tmp_col.B +=  refl_col.B/count;
+       tmp_col.R +=  rs*refl_col.R;
+       tmp_col.G +=  rs*refl_col.G;
+       tmp_col.B +=  rs*refl_col.B;
 
     }
-	free(shadowRay);
-  }
   tmp_col.R += totalAmb/count;
   tmp_col.G += totalAmb/count;
   tmp_col.B += totalAmb/count;

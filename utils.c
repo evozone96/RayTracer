@@ -183,6 +183,45 @@ struct object3D *newSphere(double ra, double rd, double rs, double rg, double r,
  return(sphere);
 }
 
+struct object3D *newCylinder(double ra, double rd, double rs, double rg, double r, double g, double b, double alpha, double r_index, double shiny)
+{
+ // Intialize a new cylinder with the specified parameters:
+ // ra, rd, rs, rg - Albedos for the components of the Phong model
+ // r, g, b, - Colour for this cylinder
+ // alpha - Transparency, must be set to 1 unless you are doing refraction
+ // r_index - Refraction index if you are doing refraction.
+ // shiny - Exponent for the specular component of the Phong model
+ //
+ // The cylinder is defined by the following vertices (CCW)
+ // (1,1,0), (-1,1,0), (-1,-1,0), (1,-1,0)
+ // With normal vector (0,0,1) (i.e. parallel to the XY cylinder)
+
+ struct object3D *cylinder=(struct object3D *)calloc(1,sizeof(struct object3D));
+
+ if (!cylinder) fprintf(stderr,"Unable to allocate new cylinder, out of memory!\n");
+ else
+ {
+  cylinder->alb.ra=ra;
+  cylinder->alb.rd=rd;
+  cylinder->alb.rs=rs;
+  cylinder->alb.rg=rg;
+  cylinder->col.R=r;
+  cylinder->col.G=g;
+  cylinder->col.B=b;
+  cylinder->alpha=alpha;
+  cylinder->r_index=r_index;
+  cylinder->shinyness=shiny;
+  cylinder->intersect=&cylinderIntersect;
+  cylinder->texImg=NULL;
+  memcpy(&cylinder->T[0][0],&eye4x4[0][0],16*sizeof(double));
+  memcpy(&cylinder->Tinv[0][0],&eye4x4[0][0],16*sizeof(double));
+  cylinder->textureMap=&texMap;
+  cylinder->frontAndBack=1;
+  cylinder->isLightSource=0;
+ }
+ return(cylinder);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 // TO DO:
 //	Complete the functions that compute intersections for the canonical plane
@@ -378,6 +417,114 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
 	free(ray_transformed);
 }
 
+void cylinderIntersect(struct object3D *cylinder, struct ray3D *ray, double *lambda, struct point3D *p, struct point3D *n, double *a, double *b)
+{
+ // Computes and returns the value of 'lambda' at the intersection
+ // between the specified ray and the specified canonical cylinder.
+
+ 	struct point3D *l, *o, *p1;
+	double d, tempa, tempb, tempc;
+	struct ray3D *ray_transformed;
+	ray_transformed = newRay(&(ray->p0), &(ray->d));
+
+	rayTransform(ray, ray_transformed, cylinder);
+	//fprintf(stderr,"%.4f %.4f %.4f %.4f %.4f %.4f\n", ray_transformed->p0.px, ray_transformed->p0.py, ray_transformed->p0.pz, ray_transformed->d.px, ray_transformed->d.py, ray_transformed->d.pz);
+		
+
+	p1 = newPoint(0, 0, 0);
+
+	o = &(ray_transformed->p0);
+	l = &(ray_transformed->d);
+	l->pw = 0;
+
+	tempa = dot(l, o);
+	tempb = length(l);
+	tempc = length(o);
+	d = tempa * tempa - tempb*tempb * (tempc*tempc - 1);
+	if (d < 0)
+	{
+		*lambda = DBL_MAX;
+	}
+	else if ( d == 0)
+	{
+
+		*lambda = tempa;
+		if (*lambda > 0)
+		{
+			rayPosition(ray_transformed, *lambda, p1);
+			matVecMult(cylinder->T, p1);
+
+			memcpy(p, p1, sizeof(point3D));
+			normalTransform(p1, n, cylinder);
+			normalize(n);
+		}
+		else
+		{
+			*lambda = DBL_MAX;
+		}
+	}
+	else
+	{		
+		*lambda = (-tempa-pow(d, 0.5))/(tempb*tempb);
+
+		//fprintf(stderr,"%.2f %.4f %.4f %.4f \n", *lambda, tempa, tempb, tempc);
+		
+		//fprintf(stderr,"%.2f %.4f %.4f %.4f %.4f %.4f %.4f\n",(*lambda), o->px, o->py, o->pz, l->px, l->py, l->pz);
+		
+		if (*lambda > 0) 
+		{
+		
+		rayPosition(ray_transformed, *lambda, p1);
+
+		memcpy(p, p1, sizeof(point3D));
+		matVecMult(cylinder->T, p);
+		normalTransform(p1, n, cylinder);
+		normalize(n);
+		//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
+
+			double theta = acos(p1->pz / 1);
+			double phi = atan( p1->py / p1->px );
+			
+		//	printf(" phi theta %.3f %.3f\n", phi, theta);
+			
+			
+			*a = (phi + PI)/(2*PI);
+			//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+			*b = (PI - theta)/ PI;
+			
+		//	printf(" %.3f %.3f %.3f\n",  p1->px, p1->py, p1->pz);
+			//fprintf(stderr,"a and b is %f %f\n", *a, *b);
+		
+		
+		
+		}
+		else
+		{
+			*lambda = DBL_MAX;
+		}
+	}
+
+	
+	//only if theres an intersection, deal with textures
+	
+	
+	/*
+	double phi = acos(p1->pz / 1);
+	double theta = atan( p1->py / p1->px );
+	
+	printf(" phi theta %.3f %.3f\n", phi, theta);
+	
+	*a = fmod(phi, (2*PI)) /(2*PI);
+	*b = (PI - theta)/ PI;
+	
+	printf(" %.3f %.3f %.3f\n",  p1->px, p1->py, p1->pz);
+	fprintf(stderr,"a and b is %f %f\n", *a, *b);
+	*/
+	
+	free(p1);
+	free(ray_transformed);
+}
+
 void loadTexture(struct object3D *o, const char *filename)
 {
  // Load a texture image from file and assign it to the
@@ -524,19 +671,16 @@ void addAreaLight(float sx, float sy, float nx, float ny, float nz,\
 	normalize(&n);
 	if (n.px == b1.px && n.py == b1.py && n.pz == b1.pz)
 	{
-		u = newPoint(0, 0, 1);
-		v = newPoint(0, 1, 0);
+		v = cross(&b2, &n);
+		u = cross(&n, v);
+		normalize(u);
+		normalize(v);
 
-	}
-	else if (n.px == b2.px && n.py == b2.py && n.pz == b2.pz)
-	{
-		u = newPoint(0, 0, 1);
-		v = newPoint(0, 1, 0);
 	}
 	else
 	{
-		v = cross(&b2, &n);
-		u = cross(&n, &b1);
+		v = cross(&b1, &n);
+		u = cross(&n, v);
 		normalize(u);
 		normalize(v);
 
@@ -549,8 +693,7 @@ void addAreaLight(float sx, float sy, float nx, float ny, float nz,\
 			p.px = u->px*(i-lx/2)*sx/lx  + v->px*(j-ly/2)*sy/ly + tx;
 			p.py = u->py*(i-lx/2)*sx/lx  + v->py*(j-ly/2)*sy/ly + ty;
 			p.pz = u->pz*(i-lx/2)*sx/lx  + v->pz*(j-ly/2)*sy/ly + tz;
-
- 			l=newPLS(&p,0.85/(lx*ly),0.85/(lx*ly),0.85/(lx*ly));
+ 			l=newPLS(&p,	1.25*r/(lx*ly),1.25*g/(lx*ly),1.25*b/(lx*ly));
 
  			insertPLS(l,l_list);
 		}
