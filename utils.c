@@ -192,9 +192,7 @@ struct object3D *newCylinder(double ra, double rd, double rs, double rg, double 
  // r_index - Refraction index if you are doing refraction.
  // shiny - Exponent for the specular component of the Phong model
  //
- // The cylinder is defined by the following vertices (CCW)
- // (1,1,0), (-1,1,0), (-1,-1,0), (1,-1,0)
- // With normal vector (0,0,1) (i.e. parallel to the XY cylinder)
+ // The cylinder is  length 2 (z = 1, z = -1) and radius 1
 
  struct object3D *cylinder=(struct object3D *)calloc(1,sizeof(struct object3D));
 
@@ -258,9 +256,6 @@ void planeIntersect(struct object3D *plane, struct ray3D *ray, double *lambda, s
 	n1->pz = -1; 
 	n1->pw = 0;
 	
-	subVectors(o, p1);
-	tempa = dot(p1, n1);
-	tempb = dot(l, n1);
 
 
 	if (l->pz == 0)
@@ -327,6 +322,7 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
 
 	o = &(ray_transformed->p0);
 	l = &(ray_transformed->d);
+
 	l->pw = 0;
 
 	tempa = dot(l, o);
@@ -343,12 +339,27 @@ void sphereIntersect(struct object3D *sphere, struct ray3D *ray, double *lambda,
 		*lambda = tempa;
 		if (*lambda > 0)
 		{
-			rayPosition(ray_transformed, *lambda, p1);
-			matVecMult(sphere->T, p1);
+		rayPosition(ray_transformed, *lambda, p1);
 
-			memcpy(p, p1, sizeof(point3D));
-			normalTransform(p1, n, sphere);
-			normalize(n);
+		memcpy(p, p1, sizeof(point3D));
+		matVecMult(sphere->T, p);
+		normalTransform(p1, n, sphere);
+		normalize(n);
+		//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
+
+			double theta = acos(p1->pz / 1);
+			double phi = atan( p1->py / p1->px );
+			
+		//	printf(" phi theta %.3f %.3f\n", phi, theta);
+			
+			
+			*a = (phi + PI)/(2*PI);
+			//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+			*b = (PI - theta)/ PI;
+			
+		//	printf(" %.3f %.3f %.3f\n",  p1->px, p1->py, p1->pz);
+			//fprintf(stderr,"a and b is %f %f\n", *a, *b);
+		
 		}
 		else
 		{
@@ -422,89 +433,397 @@ void cylinderIntersect(struct object3D *cylinder, struct ray3D *ray, double *lam
  // Computes and returns the value of 'lambda' at the intersection
  // between the specified ray and the specified canonical cylinder.
 
- 	struct point3D *l, *o, *p1;
+ 	struct point3D *l, *o, *p1, *n1;
 	double d, tempa, tempb, tempc;
 	struct ray3D *ray_transformed;
 	ray_transformed = newRay(&(ray->p0), &(ray->d));
 
 	rayTransform(ray, ray_transformed, cylinder);
 	//fprintf(stderr,"%.4f %.4f %.4f %.4f %.4f %.4f\n", ray_transformed->p0.px, ray_transformed->p0.py, ray_transformed->p0.pz, ray_transformed->d.px, ray_transformed->d.py, ray_transformed->d.pz);
-		
 
 	p1 = newPoint(0, 0, 0);
-
-	o = &(ray_transformed->p0);
-	l = &(ray_transformed->d);
+	n1 = newPoint(0, 0, 0);
+	o = newPoint(0, 0, 0);
+	l = newPoint(0, 0, 0);
+	
+	
+	o->px = ray_transformed->p0.px;
+	o->py = ray_transformed->p0.py;
+	o->pz = 0;
+	o->pw = ray_transformed->p0.pw;
+	
+	l->px = ray_transformed->d.px;
+	l->py = ray_transformed->d.py;
+	l->pz = 0;
 	l->pw = 0;
-
-	tempa = dot(l, o);
-	tempb = length(l);
-	tempc = length(o);
-	d = tempa * tempa - tempb*tempb * (tempc*tempc - 1);
-	if (d < 0)
+	if (o->px * o->px + o->py * o->py  > 1)
 	{
-		*lambda = DBL_MAX;
-	}
-	else if ( d == 0)
-	{
-
-		*lambda = tempa;
-		if (*lambda > 0)
-		{
-			rayPosition(ray_transformed, *lambda, p1);
-			matVecMult(cylinder->T, p1);
-
-			memcpy(p, p1, sizeof(point3D));
-			normalTransform(p1, n, cylinder);
-			normalize(n);
-		}
-		else
+		tempa = dot(l, o);
+		tempb = length(l);
+		tempc = length(o);
+		d = tempa * tempa - tempb*tempb * (tempc*tempc - 1);
+		if (d < 0)
 		{
 			*lambda = DBL_MAX;
+		}
+		else if ( d == 0)
+		{
+			
+
+			*lambda = tempa;
+			if (*lambda > 0)
+			{
+				rayPosition(ray_transformed, *lambda, p1);
+				matVecMult(cylinder->T, p1);
+
+				memcpy(p, p1, sizeof(point3D));
+				normalTransform(p1, n, cylinder);
+				normalize(n);
+			}
+			else
+			{
+				*lambda = DBL_MAX;
+			}
+		}
+		else
+		{		
+			*lambda = (-tempa-pow(d, 0.5))/(tempb*tempb);
+
+			//fprintf(stderr,"%.2f %.4f %.4f %.4f \n", *lambda, tempa, tempb, tempc);
+			
+			//fprintf(stderr,"%.2f %.4f %.4f %.4f %.4f %.4f %.4f\n",(*lambda), o->px, o->py, o->pz, l->px, l->py, l->pz);
+			
+			if (*lambda > 0) 
+			{
+				rayPosition(ray_transformed, *lambda, p1);
+				
+				if (p1->pz  > 1)
+				{
+					*lambda = (-tempa+pow(d, 0.5))/(tempb*tempb);
+					rayPosition(ray_transformed, *lambda, p1);
+					
+					if (p1->pz  > 1)
+					{
+						*lambda = DBL_MAX;
+					}
+					else
+					{	
+						o->px = ray_transformed->p0.px;
+						o->py = ray_transformed->p0.py;
+						o->pz = ray_transformed->p0.pz - 1;
+						o->pw = ray_transformed->p0.pw;
+						
+						l->px = ray_transformed->d.px;
+						l->py = ray_transformed->d.py;
+						l->pz = ray_transformed->d.pz;
+						l->pw = 0;
+
+
+						p1->px = 0;
+						p1->py = 0;
+						p1->pz = 0;
+						p1->pw = 1; 
+
+						n1->px = 0;
+						n1->py = 0;
+						n1->pz = 1; 
+						n1->pw = 0;
+						
+						if (l->pz == 0)
+						{
+							*(lambda) = DBL_MAX;
+						}
+						else
+						{
+							*lambda = -o->pz/l->pz;
+							if (*lambda > 0)
+							{
+								rayPosition(ray_transformed, *lambda, p1);
+								double  dis = p1->px * p1->px + p1->py * p1->py ;
+								if (dis<= 1 )
+								{
+
+									double phi = atan( p1->py / p1->px );
+									
+								//	printf(" phi theta %.3f %.3f\n", phi, theta);
+									
+									
+									*a = (phi + PI)/(2*PI);
+									//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+									*b = 0.8+0.2*pow(dis, 0.5);
+									matVecMult(cylinder->T, p1);
+
+									memcpy(p, p1, sizeof(point3D));
+									normalTransform(n1, n, cylinder);
+									normalize(n);
+									normalize(p1);
+								}
+								else
+								{
+									*lambda = DBL_MAX;
+								}
+							}
+							else
+							{
+								*lambda = DBL_MAX;
+							}
+
+						}
+
+					}
+					
+				}
+				else if (p1->pz < -1)
+				{		
+					
+						
+					*lambda = (-tempa+pow(d, 0.5))/(tempb*tempb);
+					rayPosition(ray_transformed, *lambda, p1);
+					
+					if (p1->pz  < -1)
+					{	
+						*lambda = DBL_MAX;
+					}
+					else
+					{	
+						
+						o->px = ray_transformed->p0.px;
+						o->py = ray_transformed->p0.py;
+						o->pz = ray_transformed->p0.pz + 1;
+						o->pw = ray_transformed->p0.pw;
+						
+						l->px = ray_transformed->d.px;
+						l->py = ray_transformed->d.py;
+						l->pz = ray_transformed->d.pz;
+						l->pw = 0;
+
+
+						p1->px = 0;
+						p1->py = 0;
+						p1->pz = 0;
+						p1->pw = 1; 
+
+						n1->px = 0;
+						n1->py = 0;
+						n1->pz = -1; 
+						n1->pw = 0;
+						
+						subVectors(o, p1);
+						tempa = dot(p1, n1);
+						tempb = dot(l, n1);
+						if (l->pz == 0)
+						{
+							*(lambda) = DBL_MAX;
+						}
+						else
+						{
+							*lambda = -o->pz/l->pz;
+							if (*lambda > 0)
+							{
+								rayPosition(ray_transformed, *lambda, p1);
+								double  dis = p1->px * p1->px + p1->py * p1->py  ;
+								if (dis<= 1 )
+								{
+									
+									double phi = atan( p1->py / p1->px );
+									
+								//	printf(" phi theta %.3f %.3f\n", phi, theta);
+									
+									
+									*a = (phi + PI)/(2*PI);
+									//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+									*b = 0.2-0.2*pow(dis, 0.5);
+									matVecMult(cylinder->T, p1);
+									
+									memcpy(p, p1, sizeof(point3D));
+									normalTransform(n1, n, cylinder);
+									normalize(n);
+								}
+								else
+								{
+									*lambda = DBL_MAX;
+								}
+							}
+							else
+							{
+								*lambda = DBL_MAX;
+							}
+
+						}
+
+					}
+				}
+				else//if (p1->pz  <= 1 && p1->pz  >= -1)
+				{
+					
+					memcpy(p, p1, sizeof(point3D));
+					matVecMult(cylinder->T, p);
+					p1->pz = 0;
+					normalTransform(p1, n, cylinder);
+					normalize(n);
+					//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
+
+					double phi = atan( p1->py / p1->px );
+					
+				//	printf(" phi theta %.3f %.3f\n", phi, theta);
+					
+					
+					*a = (phi + PI)/(2*PI);
+					//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+					*b = 0.2+0.6*(p1->pz +1)/2.0;
+					
+					//printf(" %.3f %.3f %.3f\n",  p->px, p->py, p->pz);
+					//fprintf(stderr,"a and b is %f %f\n", *a, *b);
+				}
+			
+			
+			}
+			else
+			{
+				*lambda = DBL_MAX;
+			}
 		}
 	}
 	else
-	{		
-		*lambda = (-tempa-pow(d, 0.5))/(tempb*tempb);
+	{
+		if (ray_transformed->p0.pz > 1)
+		{	
+			o->px = ray_transformed->p0.px;
+			o->py = ray_transformed->p0.py;
+			o->pz = ray_transformed->p0.pz - 1;
+			o->pw = ray_transformed->p0.pw;
+			
+			l->px = ray_transformed->d.px;
+			l->py = ray_transformed->d.py;
+			l->pz = ray_transformed->d.pz;
+			l->pw = 0;
 
-		//fprintf(stderr,"%.2f %.4f %.4f %.4f \n", *lambda, tempa, tempb, tempc);
-		
-		//fprintf(stderr,"%.2f %.4f %.4f %.4f %.4f %.4f %.4f\n",(*lambda), o->px, o->py, o->pz, l->px, l->py, l->pz);
-		
-		if (*lambda > 0) 
+
+			p1->px = 0;
+			p1->py = 0;
+			p1->pz = 0;
+			p1->pw = 1; 
+
+			n1->px = 0;
+			n1->py = 0;
+			n1->pz = 1; 
+			n1->pw = 0;
+			
+			if (l->pz == 0)
+			{
+				*(lambda) = DBL_MAX;
+			}
+			else
+			{
+				*lambda = -o->pz/l->pz;
+				if (*lambda > 0)
+				{
+					rayPosition(ray_transformed, *lambda, p1);
+					double  dis = p1->px * p1->px + p1->py * p1->py ;
+					if (dis<= 1 )
+					{
+
+						double phi = atan( p1->py / p1->px );
+						
+					//	printf(" phi theta %.3f %.3f\n", phi, theta);
+						
+						
+						*a = (phi + PI)/(2*PI);
+						//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+						*b = 0.8+0.2*pow(dis, 0.5);
+						matVecMult(cylinder->T, p1);
+
+						memcpy(p, p1, sizeof(point3D));
+						normalTransform(n1, n, cylinder);
+						normalize(n);
+						normalize(p1);
+					}
+					else
+					{
+						*lambda = DBL_MAX;
+					}
+				}
+				else
+				{
+					*lambda = DBL_MAX;
+				}
+
+			}
+		}
+		else if (ray_transformed->p0.pz < -1)
 		{
-		
-		rayPosition(ray_transformed, *lambda, p1);
+			o->px = ray_transformed->p0.px;
+			o->py = ray_transformed->p0.py;
+			o->pz = ray_transformed->p0.pz + 1;
+			o->pw = ray_transformed->p0.pw;
+			
+			l->px = ray_transformed->d.px;
+			l->py = ray_transformed->d.py;
+			l->pz = ray_transformed->d.pz;
+			l->pw = 0;
 
-		memcpy(p, p1, sizeof(point3D));
-		matVecMult(cylinder->T, p);
-		normalTransform(p1, n, cylinder);
-		normalize(n);
-		//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
 
-			double theta = acos(p1->pz / 1);
-			double phi = atan( p1->py / p1->px );
+			p1->px = 0;
+			p1->py = 0;
+			p1->pz = 0;
+			p1->pw = 1; 
+
+			n1->px = 0;
+			n1->py = 0;
+			n1->pz = -1; 
+			n1->pw = 0;
 			
-		//	printf(" phi theta %.3f %.3f\n", phi, theta);
-			
-			
-			*a = (phi + PI)/(2*PI);
-			//*a = fmod((phi + PI), (2*PI)) /(2*PI);
-			*b = (PI - theta)/ PI;
-			
-		//	printf(" %.3f %.3f %.3f\n",  p1->px, p1->py, p1->pz);
-			//fprintf(stderr,"a and b is %f %f\n", *a, *b);
-		
-		
-		
+			subVectors(o, p1);
+			tempa = dot(p1, n1);
+			tempb = dot(l, n1);
+			if (l->pz == 0)
+			{
+				*(lambda) = DBL_MAX;
+			}
+			else
+			{
+				*lambda = -o->pz/l->pz;
+				if (*lambda > 0)
+				{
+					rayPosition(ray_transformed, *lambda, p1);
+					double  dis = p1->px * p1->px + p1->py * p1->py  ;
+					if (dis<= 1 )
+					{
+						
+						double phi = atan( p1->py / p1->px );
+						
+					//	printf(" phi theta %.3f %.3f\n", phi, theta);
+						
+						
+						*a = (phi + PI)/(2*PI);
+						//*a = fmod((phi + PI), (2*PI)) /(2*PI);
+						*b = 0.2-0.2*pow(dis, 0.5);
+						matVecMult(cylinder->T, p1);
+						
+						memcpy(p, p1, sizeof(point3D));
+						normalTransform(n1, n, cylinder);
+						normalize(n);
+					}
+					else
+					{
+						*lambda = DBL_MAX;
+					}
+				}
+				else
+				{
+					*lambda = DBL_MAX;
+				}
+
+			}
 		}
 		else
 		{
 			*lambda = DBL_MAX;
 		}
+		
+		
 	}
-
-	
+		
 	//only if theres an intersection, deal with textures
 	
 	
@@ -522,6 +841,9 @@ void cylinderIntersect(struct object3D *cylinder, struct ray3D *ray, double *lam
 	*/
 	
 	free(p1);
+	free(n1);
+	free(l);
+	free(o);
 	free(ray_transformed);
 }
 

@@ -137,11 +137,21 @@ void buildScene(void)
  loadTexture(o, filename8);
  insertObject(o,&object_list);
  
- o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
- Scale(o,0.7,0.7,0.7); 
- RotateX(o,PI/3);
+ //~ o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ //~ Scale(o,0.7,0.7,0.7); 
+ //~ RotateX(o,PI/3);
+ //~ invert(&o->T[0][0],&o->Tinv[0][0]);
+ //~ loadTexture(o, filename5);
+ 
+  o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
+ RotateY(o,-3*PI/4);
+ 
+ RotateZ(o,-PI/4);
+ Scale(o,1,1,2.5); 
+ Translate(o,1.5,0,7.5);
  invert(&o->T[0][0],&o->Tinv[0][0]);
- loadTexture(o, filename5);
+ //loadTexture(o, filename5);
+ insertObject(o,&object_list);
 
  
  addAreaLight(3, 3, 0, -1, 0, 0, 4, 3, 20, 20, 1, 1, 0.9, &object_list, &light_list);
@@ -433,6 +443,8 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  struct point3D *closest_p, *closest_n;
  struct point3D *curr_p, *curr_n;
  struct point3D distance_test;
+ double a_temp, b_temp;
+ double closest_a, closest_b;
 
  curr_p = newPoint(0, 0, 0);
  curr_n = newPoint(0, 0, 0); 
@@ -444,11 +456,8 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
  {
    if (curr_object != Os)
    {
-    curr_object->intersect(curr_object, ray, &curr_lambda, curr_p, curr_n, a, b);
+    curr_object->intersect(curr_object, ray, &curr_lambda, curr_p, curr_n, &a_temp, &b_temp);
 
-
-    //fprintf(stderr, "%f\n", lambda);
-    //fprintf(stderr,"%f %f %f\n",curr_object->col.R,curr_object->col.G,curr_object->col.B);
     if (curr_lambda < DBL_MAX )
     { 
       distance_test = ray->p0;
@@ -459,28 +468,26 @@ void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct
 
       *obj = curr_object;
       closest = curr_distance;
+	  closest_a = a_temp;
+	  closest_b = b_temp;
       memcpy(closest_n,curr_n,sizeof(point3D));
       memcpy(closest_p,curr_p,sizeof(point3D));
       }
     }
-    //first_hit = &curr_object;
-    
   }
   curr_object = curr_object->next;
  }
  
  *lambda = closest;
  memcpy(n,closest_n,sizeof(point3D));
- memcpy(p,closest_p,sizeof(point3D));   
+ memcpy(p,closest_p,sizeof(point3D));  
+ memcpy(a,&closest_a,sizeof(double));
+ memcpy(b,&closest_b,sizeof(double));    
 
  free(closest_n);
  free(closest_p);
  free(curr_n);
  free(curr_p);
- /////////////////////////////////////////////////////////////
- // TO DO: Implement this function. See the notes for
- // reference of what to do in here
- /////////////////////////////////////////////////////////////
 
 }
 
