@@ -657,9 +657,10 @@ void cylinderIntersect(struct object3D *cylinder, struct ray3D *ray, double *lam
 				{
 					
 					memcpy(p, p1, sizeof(point3D));
+					memcpy(n1, p1, sizeof(point3D));
 					matVecMult(cylinder->T, p);
-					p1->pz = 0;
-					normalTransform(p1, n, cylinder);
+					n1->pz = 0;
+					normalTransform(n1, n, cylinder);
 					normalize(n);
 					//printf("%.3f %.3f %.3f %.3f %.3f %.3f\n", n->px, n->py, n->pz, p1->px, p1->py, p1->pz);
 

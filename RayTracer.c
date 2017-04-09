@@ -68,7 +68,9 @@ void buildScene(void)
   const char filename2[] = "red.ppm";
   
   //foreground texture
-  const char pooltable[] = "pool_table_green_with_holes.ppm";
+  const char pooltable[] = "pool_table_green.ppm";
+  const char wood[] = "wood.ppm";
+  const char border[] = "wood_border.ppm";
   
   //pool ball texture filenames  
   const char ball1[] = "1_full.ppm";
@@ -83,86 +85,88 @@ void buildScene(void)
   const char ball15[] = "15_stripe.ppm";
  
   //environment mapping texture
-  const char wall[] = "concrete.ppm";
+  const char wall[] = "woodwall.ppm";
   const char ceiling[] = "ceiling.ppm";
  
  
    // This is the rotation offset
-  double offset = PI/1.80;
+  double offset = PI/6.0;
   
   // This is the room size
   double wallsize = 300;
+  double baseheight = 0;
  
    // Back Wall Scaled to fit Entire Background
-   o=newPlane(.05,.75,.25,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
-   //Scale(o,wallsize*3,wallsize*3,1);        // Do a few transforms...
-   RotateY(o,-PI/2);
-   RotateY(o,offset);
-   //printf("%f, %f\n",-(wallsize * cos(offset)), +(wallsize * sin(offset)));
-   Translate(o,-(wallsize * cos(offset)),-3,10 + (wallsize * sin(offset)));
-   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
-  loadTexture(o, wall);
- //insertObject(o,&object_list);      // Insert into object list
+   //~ o=newPlane(.05,.75,.25,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+   //~ //Scale(o,wallsize*3,wallsize*3,1);        // Do a few transforms...
+   //~ RotateY(o,-PI/2);
+   //~ RotateY(o,offset);
+   //~ //printf("%f, %f\n",-(wallsize * cos(offset)), +(wallsize * sin(offset)));
+   //~ Translate(o,-(wallsize * cos(offset)),-3,10 + (wallsize * sin(offset)));
+   //~ invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
+  //~ loadTexture(o, wall);
+ //~ //insertObject(o,&object_list);      // Insert into object list
  
  
  
  
-  // Left wall
-  o=newPlane(.05,.75,0,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  //~ // Left wall
+  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
+  RotateY(o,-PI/2);
+  Translate(o,-wallsize,0, 0);
   RotateY(o,offset);
-  Translate(o,-(wallsize * sin(offset)),-3,10 -(wallsize * cos(offset)));
+ Translate(o,0,-3 + baseheight ,10);
   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
   loadTexture(o, wall);
   insertObject(o,&object_list);      // Insert into object list
 
-  // Right wall
-  o=newPlane(.05,.75,0,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  //~ // Right wall
+  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
-  RotateY(o,PI);
+  RotateY(o,PI/2);
+  Translate(o,wallsize,0, 0);
   RotateY(o,offset);
-  Translate(o,(wallsize * sin(offset)),-3,10 -(wallsize * cos(offset)));
+ Translate(o,0,-3 + baseheight ,10);
   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
   loadTexture(o, wall);
   insertObject(o,&object_list);      // Insert into object list
 
   
  // // Back Wall
-  o=newPlane(.05,.75,0,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
-  RotateY(o,-PI/2);
+  Translate(o,0, 0, wallsize);
   RotateY(o,offset);
-  //printf("%f, %f\n",-(wallsize * cos(offset)), +(wallsize * sin(offset)));
-  Translate(o,-(wallsize * cos(offset)),-3,10 + (wallsize * sin(offset)));
+ Translate(o,0,-3 + baseheight ,10);
   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
  loadTexture(o, wall);
  insertObject(o,&object_list);      // Insert into object list
 
  // Front Wall
-  o=newPlane(.05,.75,0,.05,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
-  RotateY(o,-PI/2);
+  Translate(o,0, 0, -wallsize);
   RotateY(o,offset);
- Translate(o,-(wallsize * cos(offset)),-3,10 - (wallsize * sin(offset)));
+ Translate(o,0,-3 + baseheight ,10);
   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
  loadTexture(o, wall);
  insertObject(o,&object_list);      // Insert into object list
  
- // Ceiling
-  o=newPlane(.05,.75,0,.05,.55,.8,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+ //~ // Ceiling
+  o=newPlane(.05,.75,0,0.55,.55,.8,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   RotateX(o,-PI/2);
+  Translate(o,0,wallsize, 0);
   RotateY(o,offset);
-  Translate(o,0,-3 + wallsize ,10);
   invert(&o->T[0][0],&o->Tinv[0][0]);    // Very important! compute
   loadTexture(o, ceiling);
   insertObject(o,&object_list);      // Insert into object list
  
  
   // Table
- double baseheight = 0;
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
- o=newPlane(.05,.75,.25,.05,.55,.8,.75,1,1,0); 
+ o=newPlane(.05,.75,.25,0.55,.55,.8,.75,1,1,0); 
  Scale(o,12,12,1);       
  RotateX(o,PI/2);
  RotateY(o,offset);
@@ -171,9 +175,43 @@ void buildScene(void)
  loadTexture(o, pooltable);
  insertObject(o,&object_list);   
  
+ 
+ //back table border
+ o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
+ Scale(o,.3,.3,12); 
+ RotateX(o,PI/2);
+ RotateZ(o,-PI/2); 
+ Translate(o, 0, 0, 12);
+ 
+ RotateY(o,offset);
+  Translate(o,0,-3 + baseheight ,10);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, border);
+ insertObject(o,&object_list);
+ 
+ //left table border
+ o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
+ Scale(o,.3,.3,12); 
+ Translate(o, -12, 0, 0);
+ RotateY(o,offset );
+ Translate(o,0,-3 + baseheight ,10);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, border);
+ insertObject(o,&object_list);
+ 
+  //right table border
+ o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
+ Scale(o,.3,.3,12); 
+ Translate(o, 12, 0, 0);
+ RotateY(o,offset );
+ Translate(o,0,-3 + baseheight ,10);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ loadTexture(o, border);
+ insertObject(o,&object_list);
+ 
 
  // 13 orange
- o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ o=newSphere(.05,.95,.25,1,1,.25,.25,1,1,10);
  Scale(o,0.7,0.7,0.7); 
  RotateX(o,PI/2);
  //L,R / U,D / F B
@@ -183,7 +221,7 @@ void buildScene(void)
  insertObject(o,&object_list);
  
  // // white 
- o=newSphere(.05,.95,.25,.35,.95,.95,.95,1,1,10);
+ o=newSphere(.05,.95,.25,1,.95,.95,.95,1,1,10);
  Scale(o,0.7,0.7,0.7); 
  RotateX(o,PI/2);
  RotateY(o,PI);
@@ -192,7 +230,7 @@ void buildScene(void)
  insertObject(o,&object_list);
  
   //8 black
- o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ o=newSphere(.05,.95,.25,1,1,.25,.25,1,1,10);
  Scale(o,0.7,0.7,0.7); 
  RotateX(o,PI/2);
  RotateY(o,PI);
@@ -203,7 +241,7 @@ void buildScene(void)
  
  
  //4 purple
- o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ o=newSphere(.05,.95,.25,1,1,.25,.25,1,1,10);
  Scale(o,0.7,0.7,0.7); 
  RotateX(o,PI/2);
  RotateY(o,PI);
@@ -213,7 +251,7 @@ void buildScene(void)
  insertObject(o,&object_list);
  
  // //10 blue
- o=newSphere(.05,.95,.25,.35,1,.25,.25,1,1,10);
+ o=newSphere(.05,.95,.25,1,1,.25,.25,1,1,10);
  Scale(o,0.7,0.7,0.7); 
  RotateX(o,PI/2);
  RotateY(o,PI);
@@ -285,14 +323,13 @@ insertObject(o,&object_list);
 
  
   o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
- RotateY(o,-3*PI/4);
- 
- RotateZ(o,-PI/4);
- Scale(o,1,1,2.5); 
- Translate(o,1.5,0,7.5);
- invert(&o->T[0][0],&o->Tinv[0][0]);
- //loadTexture(o, filename5);
- insertObject(o,&object_list);
+  Scale(o,.3,.3,15); 
+  RotateY(o,-3*PI/4);
+  RotateZ(o,-PI/15);
+  Translate(o,-10.5,0,-8);
+  invert(&o->T[0][0],&o->Tinv[0][0]);
+  loadTexture(o, wood);
+  insertObject(o,&object_list);
 
  
  addAreaLight(3, 3, 0, -1, 0, 0, 10, 3, 20, 20, 1, 1, 0.9, &object_list, &light_list);
@@ -304,6 +341,93 @@ insertObject(o,&object_list);
  // p.pw=1;
  // l=newPLS(&p,.95,.95,.95);
  // insertPLS(l,&light_list);
+
+ // End of simple scene for Assignment 3
+ // Keep in mind that you can define new types of objects such as cylinders and parametric surfaces,
+ // or, you can create code to handle arbitrary triangles and then define objects as surface meshes.
+ //
+ // Remember: A lot of the quality of your scene will depend on how much care you have put into defining
+ //           the relflectance properties of your objects, and the number and type of light sources
+ //           in the scene.
+}
+void buildScene1(void)
+{
+ // Sets up all objects in the scene. This involves creating each object,
+ // defining the transformations needed to shape and position it as
+ // desired, specifying the reflectance properties (albedos and colours)
+ // and setting up textures where needed.
+ // Light sources must be defined, positioned, and their colour defined.
+ // All objects must be inserted in the object_list. All light sources
+ // must be inserted in the light_list.
+ //
+ // To create hierarchical objects:
+ //   Copy the transform matrix from the parent node to the child, and
+ //   apply any required transformations afterwards.
+ //
+ // NOTE: After setting up the transformations for each object, don't
+ //       forget to set up the inverse transform matrix!
+
+ struct object3D *o;
+ struct pointLS *l;
+ struct point3D p;
+
+ ///////////////////////////////////////
+ // TO DO: For Assignment 3 you have to use
+ //        the simple scene provided
+ //        here, but for Assignment 4 you
+ //        *MUST* define your own scene.
+ //        Part of your mark will depend
+ //        on how nice a scene you
+ //        create. Use the simple scene
+ //        provided as a sample of how to
+ //        define and position objects.
+ ///////////////////////////////////////
+
+ // Simple scene for Assignment 3:
+ // Insert a couple of objects. A plane and two spheres
+ // with some transformations.
+
+ // Let's add a plane
+ // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
+ o=newPlane(1,0,0,1,.55,.8,.75,1,1,2);	// Note the plane is highly-reflective (rs=rg=.75) so we
+						// should see some reflections if all is done properly.
+						// Colour is close to cyan, and currently the plane is
+						// completely opaque (alpha=1). The refraction index is
+						// meaningless since alpha=1
+ Scale(o,6,6,1);				// Do a few transforms...
+ RotateZ(o,PI/1.20);
+ RotateX(o,PI/2.25);
+ Translate(o,0,-3,10);
+ invert(&o->T[0][0],&o->Tinv[0][0]);		// Very important! compute
+						// and store the inverse
+						// transform for this object!
+ insertObject(o,&object_list);			// Insert into object list
+
+ // Let's add a couple spheres
+ o=newSphere(1,0,0,1,1,.25,.25,1,1,6);
+ Scale(o,.75,.5,1.5);
+ RotateY(o,PI/2);
+ Translate(o,-1.45,1.1,3.5);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ insertObject(o,&object_list);
+
+ o=newSphere(1,0,0,1,.75,.95,.55,1,1,6);
+ Scale(o,.5,2.0,1.0);
+ RotateZ(o,PI/1.5);
+ Translate(o,1.75,1.25,5.0);
+ invert(&o->T[0][0],&o->Tinv[0][0]);
+ insertObject(o,&object_list);
+
+ // Insert a single point light source.
+ p.px=0;
+ p.py=15.5;
+ p.pz=-5.5;
+ p.pw=1;
+ l=newPLS(&p,.95,.95,.95);
+ insertPLS(l,&light_list);
+
+
+ //addAreaLight(5, 5, 0, 0, 1, 0, 15.5, -5.5, 1, 1, 0.75, 0.75, 0.75, &object_list, &light_list);
 
  // End of simple scene for Assignment 3
  // Keep in mind that you can define new types of objects such as cylinders and parametric surfaces,
@@ -414,7 +538,7 @@ currLight = light_list;
     direction->pz = currLight->p0.pz;
 
     subVectors(p, direction);
-    double intensityAmbient = 1/length(direction);
+    double intensityAmbient = 1;//length(direction);
     disToLight =  length(direction);
     normalize(direction);
     
@@ -478,14 +602,14 @@ currLight = light_list;
        tmp_col.B +=  rs*refl_col.B;
 
     }
-  tmp_col.R += totalAmb/count;
-  tmp_col.G += totalAmb/count;
-  tmp_col.B += totalAmb/count;
+  tmp_col.R += R*totalAmb/count;
+  tmp_col.G += G*totalAmb/count;
+  tmp_col.B += B*totalAmb/count;
    // printf("%d\n", depth);
   
-   col->R = min(tmp_col.R, 1);// * rg;
-   col->G = min(tmp_col.G, 1);// * rg;
-   col->B = min(tmp_col.B, 1);//* rg;
+   col->R = min(tmp_col.R * rg, 1);// * rg;
+   col->G = min(tmp_col.G * rg, 1);// * rg;
+   col->B = min(tmp_col.B * rg, 1);//* rg;
  // Be sure to update 'col' with the final colour computed here!
  free(u);
  free(v);
@@ -496,6 +620,165 @@ currLight = light_list;
  
 
 }
+//~ void rtShade(struct object3D *obj, struct point3D *p, struct point3D *n, struct ray3D *ray, int depth, double a, double b, struct colourRGB *col)
+//~ {
+ //~ // This function implements the shading model as described in lecture. It takes
+ //~ // - A pointer to the first object intersected by the ray (to get the colour properties)
+ //~ // - The coordinates of the intersection point (in world coordinates)
+ //~ // - The normal at the point
+ //~ // - The ray (needed to determine the reflection direction to use for the global component, as well as for
+ //~ //   the Phong specular component)
+ //~ // - The current racursion depth
+ //~ // - The (a,b) texture coordinates (meaningless unless texture is enabled)
+ //~ //
+ //~ // Returns:
+ //~ // - The colour for this ray (using the col pointer)
+ //~ //
+ 
+ //~ // a = 0.5;
+ //~ // b = 0.5;
+ 
+ //~ struct colourRGB tmp_col, refl_col;  // Accumulator for colour components
+
+ //~ double R,G,B;      // Colour for the object in R G and B
+
+ //~ // This will hold the colour as we process all the components of
+ //~ // the Phong illumination model
+ //~ tmp_col.R=0;
+ //~ tmp_col.G=0;
+ //~ tmp_col.B=0;
+
+ 
+ //~ // fprintf(stderr,"shade 1\n");
+ 
+ //~ if (obj->texImg==NULL)   // Not textured, use object colour
+ //~ {
+  //~ R=obj->col.R;
+  //~ G=obj->col.G;
+  //~ B=obj->col.B;
+ //~ }
+ //~ else
+ //~ {
+   //~ //  fprintf(stderr,"shade text 1 %f %f %f\n", R, G, B);
+  //~ // Get object colour from the texture given the texture coordinates (a,b), and the texturing function
+  //~ // for the object. Note that we will use textures also for Photon Mapping.
+  //~ obj->textureMap(obj->texImg,a,b,&R,&G,&B);
+ //~ // fprintf(stderr,"shade text 2 %f %f %f\n", R, G, B);
+  
+ //~ }
+
+ //~ //////////////////////////////////////////////////////////////
+ //~ // TO DO: Implement this function. Refer to the notes for
+ //~ // details about the shading model.
+ //~ //////////////////////////////////////////////////////////////
+//~ // for light in scene create ray from intersection to light 
+
+
+//~ // R = obj->col.R;
+//~ // G = obj->col.G;
+//~ // B = obj->col.B;
+ 
+//~ double shinyness = obj->shinyness;
+//~ double ra = obj->alb.ra;
+//~ double rd = obj->alb.rd;
+//~ double rs = obj->alb.rs;
+//~ double rg = obj->alb.rg;
+//~ double count = 0;
+//~ double totalAmb;
+ 
+//~ double *lambda = (double *) malloc (sizeof (double));
+//~ struct object3D *objHit;
+//~ struct point3D *pHit = newPoint(0, 0, 0);
+//~ struct point3D *nHit = newPoint(0, 0, 0);
+
+//~ //point3D r = ray->d - 2 * dot(&ray->d , n)  * n;
+//~ struct point3D *r = newPoint(dot(&ray->d , n) * n->px, dot(&ray->d , n) * n->py, dot(&ray->d , n) * n->pz);
+//~ struct point3D *u, *v ;
+//~ r->px = -r->px;
+//~ r->py = -r->py;
+//~ r->pz = -r->pz;
+//~ addVectors(r, r);
+//~ addVectors(&ray->d, r);
+//~ normalize(r);
+//~ struct ray3D *reflectedRay = newRay(p, r);
+
+//~ struct pointLS *currLight = light_list;
+//~ struct point3D *direction = newPoint(0, 0, 0);
+//~ while (currLight != NULL){
+      //~ count = count + 1;
+      //~ currLight = currLight->next;
+//~ }
+//~ u = cross(r, n);
+//~ v = cross(r, u);
+//~ currLight = light_list;
+  //~ while (currLight != NULL)
+
+  //~ {    
+    //~ direction->px = currLight->p0.px;
+    //~ direction->py = currLight->p0.py;
+    //~ direction->pz = currLight->p0.pz;
+
+    //~ subVectors(p, direction);
+    //~ double intensityAmbient = 1/length(direction);
+    //~ normalize(direction);
+    
+    //~ struct ray3D *shadowRay = newRay(p, direction);
+  
+    //~ double intensityDiffuse = 1;
+    //~ double intensitySpecular = 1;
+
+    //~ findFirstHit(shadowRay, lambda, obj, &objHit, pHit, nHit, &a, &b);
+     //~ double ambient = ra * intensityAmbient;
+     //~ totalAmb += ambient;
+    //~ if(*lambda == DBL_MAX)
+    //~ {
+      
+   //~ //fprintf(stderr,"ra: %f  rs: %f  rd: %f \n", ra, rs, rd);
+     //~ double specular = rs * pow(max(0, dot(&(shadowRay->d) , r)), shinyness) * intensitySpecular;
+     //~ double diffuse = rd * max(0, dot(n, &shadowRay->d)) * intensityDiffuse;
+   
+   //~ //fprintf(stderr,"ambient diffuse spec %f %f %f\n", ambient, diffuse, specular);
+   
+     //~ tmp_col.R += (diffuse + specular) * R * currLight->col.R;
+     //~ tmp_col.G += (diffuse + specular) * G * currLight->col.G;
+     //~ tmp_col.B += (diffuse + specular) * B * currLight->col.B;
+   
+   //~ //fprintf(stderr,"R G B %f %f %f\n", tmp_col.R, tmp_col.G, tmp_col.B);
+      
+    
+    //~ }
+      //~ currLight = currLight->next;
+ 
+
+	//~ free(shadowRay);
+  //~ }    
+  //~ if (depth > 0)
+    //~ {
+      //~ rayTrace(reflectedRay, depth-1, &refl_col, obj);
+
+       //~ tmp_col.R +=  rs*refl_col.R;
+       //~ tmp_col.G +=  rs*refl_col.G;
+       //~ tmp_col.B +=  rs*refl_col.B;
+
+    //~ }
+  //~ tmp_col.R += totalAmb/count;
+  //~ tmp_col.G += totalAmb/count;
+  //~ tmp_col.B += totalAmb/count;
+   //~ // printf("%d\n", depth);
+  
+   //~ col->R = min(tmp_col.R, 1);// * rg;
+   //~ col->G = min(tmp_col.G, 1);// * rg;
+   //~ col->B = min(tmp_col.B, 1);//* rg;
+ //~ // Be sure to update 'col' with the final colour computed here!
+ //~ free(u);
+ //~ free(v);
+ //~ free(reflectedRay);
+ //~ free(lambda);
+ //~ free(nHit);
+ //~ free(pHit);
+ 
+
+//~ }
 
 void findFirstHit(struct ray3D *ray, double *lambda, struct object3D *Os, struct object3D **obj, struct point3D *p, struct point3D *n, double *a, double *b)
 {
@@ -776,8 +1059,8 @@ cam=setupView(&e, &g, &up, -3, -1, 1, 2);
    double superSampleScale = pow(antialiasing + 1, atoi(argv[3])); // assume power of two
    fprintf(stderr,"%d", superSampleScale);
    omp_set_dynamic(0);     // Explicitly disable dynamic teams
-	omp_set_num_threads(64);
-    #pragma omp parallel for collapse(2) shared(rgbIm) private(pc) private(ray) private(d) private(i) private(col) private(areaCol)  firstprivate(MAX_DEPTH) num_threads(64) schedule(static)
+	omp_set_num_threads(8);
+    #pragma omp parallel for collapse(2) shared(rgbIm) private(pc) private(ray) private(d) private(i) private(col) private(areaCol)  firstprivate(MAX_DEPTH) num_threads(8) schedule(static)
   for (j=0;j<sx;j++)   // For each of the pixels in the imag
   {
 	

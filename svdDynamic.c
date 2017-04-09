@@ -102,7 +102,7 @@ int SVDHelper( const int m, const int n,
 	  U[i*n+k] *= scale;
       }
     }
-    anorm = max( anorm, (fabs(w[i]) + fabs(rv1[i])) );
+    anorm = fmax( anorm, (fabs(w[i]) + fabs(rv1[i])) );
   }
   for( i = n - 1; i >= 0; i-- ) {
     if( i < n - 1 ) {
