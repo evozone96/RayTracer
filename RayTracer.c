@@ -111,7 +111,7 @@ void buildScene(void)
  
  
   //~ // Left wall
-  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.65,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   RotateY(o,-PI/2);
   Translate(o,-wallsize,0, 0);
@@ -122,7 +122,7 @@ void buildScene(void)
   insertObject(o,&object_list);      // Insert into object list
 
   //~ // Right wall
-  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.65,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   RotateY(o,PI/2);
   Translate(o,wallsize,0, 0);
@@ -134,7 +134,7 @@ void buildScene(void)
 
   
  // // Back Wall
-  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.65,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   Translate(o,0, 0, wallsize);
   RotateY(o,offset);
@@ -144,7 +144,7 @@ void buildScene(void)
  insertObject(o,&object_list);      // Insert into object list
 
  // Front Wall
-  o=newPlane(.05,.75,0,1,.55,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,1,.65,.55,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   Translate(o,0, 0, -wallsize);
   RotateY(o,offset);
@@ -154,7 +154,7 @@ void buildScene(void)
  insertObject(o,&object_list);      // Insert into object list
  
  //~ // Ceiling
-  o=newPlane(.05,.75,0,0.55,.55,.8,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
+  o=newPlane(.05,.75,0,0.65,.55,.8,.75,1,1,0);  // Note the plane is highly-reflective (rs=rg=.75) so we
   Scale(o,wallsize,wallsize,1);        // Do a few transforms...
   RotateX(o,-PI/2);
   Translate(o,0,wallsize, 0);
@@ -166,7 +166,7 @@ void buildScene(void)
  
   // Table
  // Note the parameters: ra, rd, rs, rg, R, G, B, alpha, r_index, and shinyness)
- o=newPlane(.05,.75,.25,0.55,.55,.8,.75,1,1,0); 
+ o=newPlane(.05,.75,.25,0.65,.55,.8,.75,1,1,0); 
  Scale(o,12,12,1);       
  RotateX(o,PI/2);
  RotateY(o,offset);
@@ -178,7 +178,7 @@ void buildScene(void)
  
  //back table border
  o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
- Scale(o,.3,.3,12); 
+ Scale(o,.5,.5,12); 
  RotateX(o,PI/2);
  RotateZ(o,-PI/2); 
  Translate(o, 0, 0, 12);
@@ -191,7 +191,7 @@ void buildScene(void)
  
  //left table border
  o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
- Scale(o,.3,.3,12); 
+ Scale(o,.5,.5,12); 
  Translate(o, -12, 0, 0);
  RotateY(o,offset );
  Translate(o,0,-3 + baseheight ,10);
@@ -201,7 +201,7 @@ void buildScene(void)
  
   //right table border
  o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
- Scale(o,.3,.3,12); 
+ Scale(o,.5,.5,12); 
  Translate(o, 12, 0, 0);
  RotateY(o,offset );
  Translate(o,0,-3 + baseheight ,10);
@@ -324,6 +324,7 @@ insertObject(o,&object_list);
  
   o=newCylinder(.05,.95,.15,.35,1,.25,.25,1,1,3);
   Scale(o,.3,.3,15); 
+  RotateX(o,PI);
   RotateY(o,-3*PI/4);
   RotateZ(o,-PI/15);
   Translate(o,-10.5,0,-8);
@@ -1060,7 +1061,7 @@ cam=setupView(&e, &g, &up, -3, -1, 1, 2);
    fprintf(stderr,"%d", superSampleScale);
    omp_set_dynamic(0);     // Explicitly disable dynamic teams
 	omp_set_num_threads(8);
-    #pragma omp parallel for collapse(2) shared(rgbIm) private(pc) private(ray) private(d) private(i) private(col) private(areaCol)  firstprivate(MAX_DEPTH) num_threads(8) schedule(static)
+    #pragma omp parallel for shared(rgbIm) private(pc) private(ray) private(d) private(i) private(col) private(areaCol)  firstprivate(MAX_DEPTH) num_threads(8) schedule(static)
   for (j=0;j<sx;j++)   // For each of the pixels in the imag
   {
 	
