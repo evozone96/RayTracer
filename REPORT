@@ -3,3 +3,5 @@
  The code works as follows, we generate one ray for each pixel we need to color, the ray is first in camera coordinates and then converted into world coordinates. For each ray, we find the first item it hits. If it does not hit any objects, we then find the location of the hit, the normal of the surface of the object it hits, and using the Phong model, compute the correct colour. We then shoot a reflected ray from that surface and find further objects that it hits, adding those components to our current colour. This is done up to a certain recursive level.
  
  The most difficult component of the assignment was ensuring that the intersections work correctly, that the file was written correctly. The correct implementation required thorough understanding of geometry, transformations, and lighting. As a result, each member gained better understanding of the material.
+
+For optimal parameters that generate similar results to the final submitted A4 image, use: RayTracer 1024 2 1 output.ppm
